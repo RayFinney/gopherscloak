@@ -35,4 +35,12 @@ type GophersCloak interface {
 	GetUserOfflineSessionsForClient(token, realm, userID, clientID string) ([]*UserSessionRepresentation, error)
 	// GetUserInfo gets the user info for the given realm
 	GetUserInfo(accessToken string, realm string) (*UserInfo, error)
+
+	//Groups
+	// GetGroups gets all groups of the given realm
+	GetGroups(accessToken string, realm string) ([]*Group, error)
+	// GetGroup gets the given group
+	GetGroup(accessToken string, realm, groupID string) (*Group, error)
+	// GetGroupMembers get a list of users of group with id in realm
+	GetGroupMembers(accessToken string, realm, groupID string) ([]*User, error)
 }
