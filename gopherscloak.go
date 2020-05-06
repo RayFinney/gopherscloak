@@ -3,6 +3,8 @@ package gopherscloak
 type GophersCloak interface {
 	// Admin
 	LoginAdmin(username string, password string) (*Token, error)
+	// User Login
+	Login(username string, password string) (*Token, error)
 
 	// User
 	// CreateUser creates a new user

@@ -152,6 +152,21 @@ func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, erro
 	return token, err
 }
 
+func (g *gopherCloak) Login(username string, password string, realm string) (*Token, error) {
+	req, _ := http.NewRequest("POST",
+		fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", g.basePath, realm),
+		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=admin-cli&grant_type=password", username, password)))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(response.Body)
+	token := new(Token)
+	err = json.Unmarshal(body, token)
+	return token, err
+}
+
 func (g *gopherCloak) CreateUser(accessToken string, realm string, user User) (string, error) {
 	userJson, err := json.Marshal(user)
 	if err != nil {
