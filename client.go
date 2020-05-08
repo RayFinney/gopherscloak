@@ -147,6 +147,13 @@ func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, erro
 		return nil, err
 	}
 	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return nil, err
+	}
 	token := new(Token)
 	err = json.Unmarshal(body, token)
 	return token, err
@@ -162,6 +169,13 @@ func (g *gopherCloak) Login(username string, password string, realm string, clie
 		return nil, err
 	}
 	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return nil, err
+	}
 	token := new(Token)
 	err = json.Unmarshal(body, token)
 	return token, err
