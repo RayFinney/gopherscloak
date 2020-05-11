@@ -304,7 +304,26 @@ func (g *gopherCloak) SetPassword(accessToken string, userID string, realm strin
 }
 
 func (g *gopherCloak) UpdateUser(accessToken string, realm string, user User) error {
-	panic("implement me")
+	userJson, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("PUT", g.getAdminRealmURL(realm, "users", user.ID), bytes.NewBuffer(userJson))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (g *gopherCloak) AddUserToGroup(accessToken string, realm string, userID string, groupID string) error {
