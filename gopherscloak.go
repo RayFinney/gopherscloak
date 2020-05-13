@@ -1,6 +1,9 @@
 package gopherscloak
 
 type GophersCloak interface {
+	// Utility
+	HealthCheck() error
+
 	// Admin
 	LoginAdmin(username string, password string) (*Token, error)
 	// User Login

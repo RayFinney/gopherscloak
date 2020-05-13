@@ -34,6 +34,19 @@ type gopherCloak struct {
 	certsLock  sync.Mutex
 }
 
+func (g *gopherCloak) HealthCheck() error {
+	req, err := http.NewRequest("GET", g.basePath, bytes.NewBufferString(""))
+	if err != nil {
+		return err
+	}
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	return g.checkForErrorsInResponse(response)
+}
+
 func (g *gopherCloak) GetGroups(accessToken string, realm string) ([]*Group, error) {
 	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "groups"), bytes.NewBufferString(""))
 	if err != nil {
