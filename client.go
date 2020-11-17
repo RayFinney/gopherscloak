@@ -172,10 +172,10 @@ func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, erro
 	return token, err
 }
 
-func (g *gopherCloak) Login(username string, password string, realm string, clientId string) (*Token, error) {
+func (g *gopherCloak) Login(username string, password string, realm string, clientId string, secret string) (*Token, error) {
 	req, _ := http.NewRequest("POST",
 		fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", g.basePath, realm),
-		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=%s&grant_type=password", username, password, clientId)))
+		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=%s&grant_type=password&client_secret=%s", username, password, clientId, secret)))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response, err := g.httpClient.Do(req)
 	if err != nil {

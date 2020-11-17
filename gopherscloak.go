@@ -7,7 +7,7 @@ type GophersCloak interface {
 	// Admin
 	LoginAdmin(username string, password string) (*Token, error)
 	// User Login
-	Login(username string, password string, realm string, clientId string) (*Token, error)
+	Login(username string, password string, realm string, clientId string, secret string) (*Token, error)
 
 	// User
 	// CreateUser creates a new user
