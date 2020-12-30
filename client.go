@@ -274,6 +274,38 @@ func (g *gopherCloak) GetUsers(accessToken string, realm string, params GetUsers
 	panic("implement me")
 }
 
+func (g *gopherCloak) GetUserByUsername(accessToken string, realm string, username string) (*User, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s?username=%s", g.getAdminRealmURL(realm, "users"), username), bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	users := make([]*User, 0)
+	err = json.Unmarshal(body, &users)
+	if err != nil {
+		return nil, err
+	}
+	if len(users) <= 0 {
+		return nil, errors.New("not found")
+	}
+	return users[0], nil
+}
+
 func (g *gopherCloak) GetUserGroups(accessToken string, realm string, userID string) ([]*UserGroup, error) {
 	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "users", userID, "groups"), bytes.NewBufferString(""))
 	if err != nil {

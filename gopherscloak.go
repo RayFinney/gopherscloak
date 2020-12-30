@@ -16,6 +16,8 @@ type GophersCloak interface {
 	DeleteUser(accessToken string, realm, userID string) error
 	// GetUserByID gets the user with the given id
 	GetUserByID(accessToken string, realm string, userID string) (*User, error)
+	// GetUserByUsername gets the user with the given username
+	GetUserByUsername(accessToken string, realm string, username string) (*User, error)
 	// GetUser count returns the userCount of the given realm
 	GetUserCount(accessToken string, realm string) (int, error)
 	// GetUsers gets all users of the given realm
