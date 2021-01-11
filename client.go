@@ -388,7 +388,19 @@ func (g *gopherCloak) AddUserToGroup(accessToken string, realm string, userID st
 }
 
 func (g *gopherCloak) DeleteUserFromGroup(accessToken string, realm string, userID string, groupID string) error {
-	panic("implement me")
+	req, err := http.NewRequest("DELETE", g.getAdminRealmURL(realm, "users", userID, "groups", groupID), bytes.NewBufferString(""))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	return g.checkForErrorsInResponse(response)
 }
 
 func (g *gopherCloak) GetUserSessions(token, realm, userID string) ([]*UserSessionRepresentation, error) {
