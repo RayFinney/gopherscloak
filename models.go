@@ -15,7 +15,7 @@ type User struct {
 	Attributes                 map[string][]string         `json:"attributes,omitempty"`
 	DisableableCredentialTypes []interface{}               `json:"disableableCredentialTypes,omitempty"`
 	RequiredActions            []string                    `json:"requiredActions,omitempty"`
-	NotBefore                  int64                       `json:"notBefore, omitempty"`
+	NotBefore                  int64                       `json:"notBefore,omitempty"`
 	Access                     map[string]bool             `json:"access"`
 	ClientRoles                map[string][]string         `json:"clientRoles,omitempty"`
 	RealmRoles                 []string                    `json:"realmRoles,omitempty"`

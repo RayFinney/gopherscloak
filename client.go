@@ -411,6 +411,25 @@ func (g *gopherCloak) GetUserOfflineSessionsForClient(token, realm, userID, clie
 	panic("implement me")
 }
 
+func (g *gopherCloak) LogoutAllUserSessions(accessToken string, realm string, userID string) error {
+	req, err := http.NewRequest("POST", g.getAdminRealmURL(realm, "users", userID, "logout"), bytes.NewBufferString(""))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return err
+	}
+	return nil
+}
+
 // ===============
 // Keycloak client
 // ===============
