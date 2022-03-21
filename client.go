@@ -139,7 +139,7 @@ func (g *gopherCloak) checkForErrorsInResponse(response *http.Response) error {
 	if response == nil {
 		return errors.New("no response")
 	}
-	if response.StatusCode > 400 || response.StatusCode > 500 {
+	if response.StatusCode >= 400 || response.StatusCode >= 500 {
 		body, _ := ioutil.ReadAll(response.Body)
 		return fmt.Errorf("%s - %s", response.Status, string(body))
 	}
