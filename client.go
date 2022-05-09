@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -138,7 +139,7 @@ func (g *gopherCloak) checkForErrorsInResponse(response *http.Response) error {
 	if response == nil {
 		return errors.New("no response")
 	}
-	if response.StatusCode > 400 || response.StatusCode > 500 {
+	if response.StatusCode >= 400 || response.StatusCode >= 500 {
 		body, _ := ioutil.ReadAll(response.Body)
 		return fmt.Errorf("%s - %s", response.Status, string(body))
 	}
@@ -154,7 +155,7 @@ func getID(response *http.Response) string {
 func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, error) {
 	req, _ := http.NewRequest("POST",
 		fmt.Sprintf("%s/auth/realms/master/protocol/openid-connect/token", g.basePath),
-		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=admin-cli&grant_type=password", username, password)))
+		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=admin-cli&grant_type=password", url.QueryEscape(username), url.QueryEscape(password))))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response, err := g.httpClient.Do(req)
 	if err != nil {
@@ -176,7 +177,7 @@ func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, erro
 func (g *gopherCloak) Login(username string, password string, realm string, clientId string, secret string) (*Token, error) {
 	req, _ := http.NewRequest("POST",
 		fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", g.basePath, realm),
-		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=%s&grant_type=password&client_secret=%s", username, password, clientId, secret)))
+		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=%s&grant_type=password&client_secret=%s", url.QueryEscape(username), url.QueryEscape(password), url.QueryEscape(clientId), url.QueryEscape(secret))))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response, err := g.httpClient.Do(req)
 	if err != nil {
