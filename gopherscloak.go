@@ -2,7 +2,7 @@ package gopherscloak
 
 type GophersCloak interface {
 	// Utility
-	HealthCheck() error
+	HealthCheck(realm string) error
 
 	// Admin
 	LoginAdmin(username string, password string) (*Token, error)
@@ -45,7 +45,7 @@ type GophersCloak interface {
 	// LogoutAllUserSessions log out all current user sessions
 	LogoutAllUserSessions(accessToken string, realm string, userID string) error
 
-	//Groups
+	// Groups
 	// GetGroups gets all groups of the given realm
 	GetGroups(accessToken string, realm string) ([]*Group, error)
 	// GetGroup gets the given group

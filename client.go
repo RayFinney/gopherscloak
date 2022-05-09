@@ -34,8 +34,8 @@ type gopherCloak struct {
 	certsLock  sync.Mutex
 }
 
-func (g *gopherCloak) HealthCheck() error {
-	req, err := http.NewRequest("GET", g.basePath, bytes.NewBufferString(""))
+func (g *gopherCloak) HealthCheck(realm string) error {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/auth/realms/%s", g.basePath, realm), bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}
