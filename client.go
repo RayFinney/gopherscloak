@@ -36,7 +36,7 @@ type gopherCloak struct {
 }
 
 func (g *gopherCloak) HealthCheck(realm string) error {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/auth/realms/%s", g.basePath, realm), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/auth/realms/%s", g.basePath, realm), bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (g *gopherCloak) HealthCheck(realm string) error {
 }
 
 func (g *gopherCloak) GetGroups(accessToken string, realm string) ([]*Group, error) {
-	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "groups"), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "groups"), bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (g *gopherCloak) GetGroups(accessToken string, realm string) ([]*Group, err
 }
 
 func (g *gopherCloak) GetGroup(accessToken string, realm, groupID string) (*Group, error) {
-	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "groups", groupID), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "groups", groupID), bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (g *gopherCloak) GetGroup(accessToken string, realm, groupID string) (*Grou
 }
 
 func (g *gopherCloak) GetGroupMembers(accessToken string, realm, groupID string) ([]*User, error) {
-	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "groups", groupID, "members"), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "groups", groupID, "members"), bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func getID(response *http.Response) string {
 }
 
 func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, error) {
-	req, _ := http.NewRequest("POST",
+	req, _ := http.NewRequest(http.MethodPost,
 		fmt.Sprintf("%s/auth/realms/master/protocol/openid-connect/token", g.basePath),
 		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=admin-cli&grant_type=password", url.QueryEscape(username), url.QueryEscape(password))))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -175,7 +175,7 @@ func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, erro
 }
 
 func (g *gopherCloak) Login(username string, password string, realm string, clientId string, secret string) (*Token, error) {
-	req, _ := http.NewRequest("POST",
+	req, _ := http.NewRequest(http.MethodPost,
 		fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", g.basePath, realm),
 		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=%s&grant_type=password&client_secret=%s", url.QueryEscape(username), url.QueryEscape(password), url.QueryEscape(clientId), url.QueryEscape(secret))))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -201,7 +201,7 @@ func (g *gopherCloak) CreateUser(accessToken string, realm string, user User) (s
 	if err != nil {
 		return "", err
 	}
-	req, err := http.NewRequest("POST", g.getAdminRealmURL(realm, "users"), bytes.NewBuffer(userJson))
+	req, err := http.NewRequest(http.MethodPost, g.getAdminRealmURL(realm, "users"), bytes.NewBuffer(userJson))
 	if err != nil {
 		return "", err
 	}
@@ -220,7 +220,7 @@ func (g *gopherCloak) CreateUser(accessToken string, realm string, user User) (s
 }
 
 func (g *gopherCloak) DeleteUser(accessToken string, realm, userID string) error {
-	req, err := http.NewRequest("DELETE", g.getAdminRealmURL(realm, "users", userID), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodDelete, g.getAdminRealmURL(realm, "users", userID), bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func (g *gopherCloak) DeleteUser(accessToken string, realm, userID string) error
 }
 
 func (g *gopherCloak) GetUserByID(accessToken string, realm string, userID string) (*User, error) {
-	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "users", userID), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "users", userID), bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +277,7 @@ func (g *gopherCloak) GetUsers(accessToken string, realm string, params GetUsers
 }
 
 func (g *gopherCloak) GetUserByUsername(accessToken string, realm string, username string) (*User, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s?username=%s", g.getAdminRealmURL(realm, "users"), username), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s?username=%s", g.getAdminRealmURL(realm, "users"), username), bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +309,7 @@ func (g *gopherCloak) GetUserByUsername(accessToken string, realm string, userna
 }
 
 func (g *gopherCloak) GetUserGroups(accessToken string, realm string, userID string) ([]*UserGroup, error) {
-	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "users", userID, "groups"), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "users", userID, "groups"), bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +355,7 @@ func (g *gopherCloak) UpdateUser(accessToken string, realm string, user User) er
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("PUT", g.getAdminRealmURL(realm, "users", user.ID), bytes.NewBuffer(userJson))
+	req, err := http.NewRequest(http.MethodPut, g.getAdminRealmURL(realm, "users", user.ID), bytes.NewBuffer(userJson))
 	if err != nil {
 		return err
 	}
@@ -374,7 +374,7 @@ func (g *gopherCloak) UpdateUser(accessToken string, realm string, user User) er
 }
 
 func (g *gopherCloak) AddUserToGroup(accessToken string, realm string, userID string, groupID string) error {
-	req, err := http.NewRequest("PUT", g.getAdminRealmURL(realm, "users", userID, "groups", groupID), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodPut, g.getAdminRealmURL(realm, "users", userID, "groups", groupID), bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}
@@ -390,7 +390,7 @@ func (g *gopherCloak) AddUserToGroup(accessToken string, realm string, userID st
 }
 
 func (g *gopherCloak) DeleteUserFromGroup(accessToken string, realm string, userID string, groupID string) error {
-	req, err := http.NewRequest("DELETE", g.getAdminRealmURL(realm, "users", userID, "groups", groupID), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodDelete, g.getAdminRealmURL(realm, "users", userID, "groups", groupID), bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}
@@ -414,7 +414,7 @@ func (g *gopherCloak) GetUserOfflineSessionsForClient(token, realm, userID, clie
 }
 
 func (g *gopherCloak) LogoutAllUserSessions(accessToken string, realm string, userID string) error {
-	req, err := http.NewRequest("POST", g.getAdminRealmURL(realm, "users", userID, "logout"), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodPost, g.getAdminRealmURL(realm, "users", userID, "logout"), bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}
@@ -430,6 +430,26 @@ func (g *gopherCloak) LogoutAllUserSessions(accessToken string, realm string, us
 		return err
 	}
 	return nil
+}
+
+func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]byte, error) {
+	if len(query) > 0 && string(query[0]) != "?" {
+		query = "?" + query
+	}
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "events")+query, bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	content, _ := ioutil.ReadAll(response.Body)
+	return content, g.checkForErrorsInResponse(response)
 }
 
 // ===============
