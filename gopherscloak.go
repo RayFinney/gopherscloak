@@ -53,5 +53,5 @@ type GophersCloak interface {
 	// GetGroupMembers get a list of users of group with id in realm
 	GetGroupMembers(accessToken string, realm, groupID string) ([]*User, error)
 	// GetEvents Returns all events, or filters them based on URL query parameters listed here
-	GetEvents(accessToken string, realm, query string) ([]byte, error)
+	GetEvents(accessToken string, realm, query string) ([]*Event, error)
 }

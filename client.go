@@ -432,7 +432,7 @@ func (g *gopherCloak) LogoutAllUserSessions(accessToken string, realm string, us
 	return nil
 }
 
-func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]byte, error) {
+func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]*Event, error) {
 	if len(query) > 0 && string(query[0]) != "?" {
 		query = "?" + query
 	}
@@ -448,8 +448,14 @@ func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]byte
 		return nil, err
 	}
 	defer response.Body.Close()
-	content, _ := ioutil.ReadAll(response.Body)
-	return content, g.checkForErrorsInResponse(response)
+	body, _ := ioutil.ReadAll(response.Body)
+	events := make([]*Event, 0)
+	err = json.Unmarshal(body, &events)
+	if err != nil {
+		return nil, err
+	}
+
+	return events, g.checkForErrorsInResponse(response)
 }
 
 // ===============
