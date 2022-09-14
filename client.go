@@ -463,13 +463,25 @@ func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]*Eve
 // ===============
 
 // NewClient creates a new Client
-func NewClient(basePath string) GophersCloak {
+func NewClient(basePath string, httpClient *http.Client) GophersCloak {
 	c := gopherCloak{
 		basePath:   strings.TrimRight(basePath, urlSeparator),
 		certsCache: make(map[string]*CertResponse),
 	}
-	c.httpClient = &http.Client{}
-	c.Config.CertsInvalidateTime = 10 * time.Minute
+	c.httpClient = httpClient
+	if httpClient == nil {
+		t := http.DefaultTransport.(*http.Transport).Clone()
+		t.MaxIdleConns = 100
+		t.MaxConnsPerHost = 100
+		t.MaxIdleConnsPerHost = 100
+
+		httpClient = &http.Client{
+			Timeout:   10 * time.Second,
+			Transport: t,
+		}
+		c.httpClient = httpClient
+	}
+	c.Config.CertsInvalidateTime = 60 * time.Minute
 
 	return &c
 }
