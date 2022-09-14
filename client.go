@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -14,12 +14,10 @@ import (
 )
 
 const (
-	adminClientID string = "admin-cli"
-	urlSeparator  string = "/"
+	urlSeparator string = "/"
 )
 
 var authAdminRealms = makeURL("auth", "admin", "realms")
-var authRealms = makeURL("auth", "realms")
 
 func makeURL(path ...string) string {
 	return strings.Join(path, urlSeparator)
@@ -65,7 +63,7 @@ func (g *gopherCloak) GetGroups(accessToken string, realm string) ([]*Group, err
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +89,7 @@ func (g *gopherCloak) GetGroup(accessToken string, realm, groupID string) (*Grou
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +115,7 @@ func (g *gopherCloak) GetGroupMembers(accessToken string, realm, groupID string)
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +138,7 @@ func (g *gopherCloak) checkForErrorsInResponse(response *http.Response) error {
 		return errors.New("no response")
 	}
 	if response.StatusCode >= 400 || response.StatusCode >= 500 {
-		body, _ := ioutil.ReadAll(response.Body)
+		body, _ := io.ReadAll(response.Body)
 		return fmt.Errorf("%s - %s", response.Status, string(body))
 	}
 	return nil
@@ -161,7 +159,7 @@ func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, erro
 	if err != nil {
 		return nil, err
 	}
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +181,7 @@ func (g *gopherCloak) Login(username string, password string, realm string, clie
 	if err != nil {
 		return nil, err
 	}
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +253,7 @@ func (g *gopherCloak) GetUserByID(accessToken string, realm string, userID strin
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +291,7 @@ func (g *gopherCloak) GetUserByUsername(accessToken string, realm string, userna
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +323,7 @@ func (g *gopherCloak) GetUserGroups(accessToken string, realm string, userID str
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +446,7 @@ func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]*Eve
 		return nil, err
 	}
 	defer response.Body.Close()
-	body, _ := ioutil.ReadAll(response.Body)
+	body, _ := io.ReadAll(response.Body)
 	events := make([]*Event, 0)
 	err = json.Unmarshal(body, &events)
 	if err != nil {
