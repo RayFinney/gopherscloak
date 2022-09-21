@@ -271,8 +271,11 @@ func (g *gopherCloak) GetUserCount(accessToken string, realm string) (int, error
 	panic("implement me")
 }
 
-func (g *gopherCloak) GetUsers(accessToken string, realm string, limit int64) ([]*User, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s?limit=%d", g.getAdminRealmURL(realm, "users"), limit), bytes.NewBufferString(""))
+func (g *gopherCloak) GetUsers(accessToken string, realm string, query string) ([]*User, error) {
+	if len(query) > 0 && string(query[0]) != "?" {
+		query = "?" + query
+	}
+	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "users")+query, bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
