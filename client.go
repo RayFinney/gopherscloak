@@ -272,8 +272,33 @@ func (g *gopherCloak) GetUserCount(accessToken string, realm string) (int, error
 	panic("implement me")
 }
 
-func (g *gopherCloak) GetUsers(accessToken string, realm string, params GetUsersParams) ([]*User, error) {
-	panic("implement me")
+func (g *gopherCloak) GetUsers(accessToken string, realm string, limit int64) ([]*User, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s?limit=%d", g.getAdminRealmURL(realm, "users"), limit), bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	users := make([]*User, 0)
+
+	err = json.Unmarshal(body, &users)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 func (g *gopherCloak) GetUserByUsername(accessToken string, realm string, username string) (*User, error) {

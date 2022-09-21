@@ -21,7 +21,7 @@ type GophersCloak interface {
 	// GetUser count returns the userCount of the given realm
 	GetUserCount(accessToken string, realm string) (int, error)
 	// GetUsers gets all users of the given realm
-	GetUsers(accessToken string, realm string, params GetUsersParams) ([]*User, error)
+	GetUsers(accessToken string, realm string, limit int64) ([]*User, error)
 	// GetUserGroups gets the groups of the given user
 	GetUserGroups(accessToken string, realm string, userID string) ([]*UserGroup, error)
 	// GetUsersByRoleName returns all users have a given role
