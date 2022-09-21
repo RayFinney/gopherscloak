@@ -127,3 +127,20 @@ type Group struct {
 	ClientRoles map[string][]string `json:"clientRoles,omitempty"`
 	RealmRoles  []string            `json:"realmRoles,omitempty"`
 }
+
+type Event struct {
+	Time      int64        `json:"time"`
+	Type      string       `json:"type"`
+	RealmId   string       `json:"realmId"`
+	ClientId  string       `json:"clientId"`
+	UserId    string       `json:"userId"`
+	SessionId string       `json:"sessionId"`
+	IpAddress string       `json:"ipAddress"`
+	Details   EventDetails `json:"details"`
+}
+
+type EventDetails struct {
+	Action   string `json:"action"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
