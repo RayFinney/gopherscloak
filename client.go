@@ -154,7 +154,7 @@ func getID(response *http.Response) string {
 
 func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, error) {
 	req, _ := http.NewRequest(http.MethodPost,
-		fmt.Sprintf("%s/auth/realms/master/protocol/openid-connect/token", g.publicBasePath),
+		fmt.Sprintf("%s/auth/realms/master/protocol/openid-connect/token", g.basePath),
 		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=admin-cli&grant_type=password", url.QueryEscape(username), url.QueryEscape(password))))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response, err := g.httpClient.Do(req)
