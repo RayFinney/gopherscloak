@@ -25,9 +25,10 @@ func makeURL(path ...string) string {
 }
 
 type gopherCloak struct {
-	basePath   string
-	certsCache map[string]*CertResponse
-	Config     struct {
+	basePath       string
+	publicBasePath string
+	certsCache     map[string]*CertResponse
+	Config         struct {
 		CertsInvalidateTime time.Duration
 	}
 	httpClient *http.Client
@@ -153,7 +154,7 @@ func getID(response *http.Response) string {
 
 func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, error) {
 	req, _ := http.NewRequest(http.MethodPost,
-		fmt.Sprintf("%s/auth/realms/master/protocol/openid-connect/token", g.basePath),
+		fmt.Sprintf("%s/auth/realms/master/protocol/openid-connect/token", g.publicBasePath),
 		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=admin-cli&grant_type=password", url.QueryEscape(username), url.QueryEscape(password))))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response, err := g.httpClient.Do(req)
@@ -175,7 +176,7 @@ func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, erro
 
 func (g *gopherCloak) Login(username string, password string, realm string, clientId string, secret string) (*Token, error) {
 	req, _ := http.NewRequest(http.MethodPost,
-		fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", g.basePath, realm),
+		fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", g.publicBasePath, realm),
 		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=%s&grant_type=password&client_secret=%s", url.QueryEscape(username), url.QueryEscape(password), url.QueryEscape(clientId), url.QueryEscape(secret))))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response, err := g.httpClient.Do(req)
@@ -490,10 +491,11 @@ func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]*Eve
 // ===============
 
 // NewClient creates a new Client
-func NewClient(basePath string, httpClient *http.Client) GophersCloak {
+func NewClient(basePath string, publicBasePath string, httpClient *http.Client) GophersCloak {
 	c := gopherCloak{
-		basePath:   strings.TrimRight(basePath, urlSeparator),
-		certsCache: make(map[string]*CertResponse),
+		basePath:       strings.TrimRight(basePath, urlSeparator),
+		publicBasePath: strings.TrimRight(publicBasePath, urlSeparator),
+		certsCache:     make(map[string]*CertResponse),
 	}
 	c.httpClient = httpClient
 	if httpClient == nil {
