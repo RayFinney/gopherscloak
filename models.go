@@ -66,6 +66,12 @@ type UserGroup struct {
 	Path string `json:"path,omitempty"`
 }
 
+// UserRealmRoles represents the Effective Realm Roles
+type UserRealmRoles struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
 // GetUsersByRoleParams represents the optional parameters for getting users by role
 type GetUsersByRoleParams struct {
 	First int `json:"first,string,omitempty"`
