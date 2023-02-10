@@ -25,7 +25,13 @@ type GophersCloak interface {
 	// GetUserGroups gets the groups of the given user
 	GetUserGroups(accessToken string, realm string, userID string) ([]*UserGroup, error)
 	// GetEffectiveRealmRoles gets effective realm-level role mappings. This will recurse all composite roles to get the result.
-	GetEffectiveRealmRoles(accessToken string, realm string, userID string) ([]*UserRealmRoles, error)
+	GetUserEffectiveRealmRoles(accessToken string, realm string, userID string) ([]*UserRealmRoles, error)
+	// GetUserAvailableRealmRoles gets available realm-level role mappings. This will recurse all composite roles to get the result.
+	GetUserAvailableRealmRoles(accessToken string, realm string, userID string) ([]*UserRealmRoles, error)
+	// AddUserEffectiveRealmRoles adds effective realm-level role mappings to the user
+	AddUserEffectiveRealmRoles(accessToken string, realm string, userID string, roles []*UserRealmRoles) error
+	//DeleteUserEffectiveRealmRoles adds effective realm-level role mappings to the user
+	DeleteUserEffectiveRealmRoles(accessToken string, realm string, userID string, roles []*UserRealmRoles) error
 	// GetUsersByRoleName returns all users have a given role
 	GetUsersByRoleName(accessToken string, realm string, roleName string) ([]*User, error)
 	// GetUsersByClientRoleName returns all users have a given client role

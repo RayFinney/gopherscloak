@@ -366,7 +366,7 @@ func (g *gopherCloak) GetUserGroups(accessToken string, realm string, userID str
 	return userGroups, nil
 }
 
-func (g *gopherCloak) GetEffectiveRealmRoles(accessToken string, realm string, userID string) ([]*UserRealmRoles, error) {
+func (g *gopherCloak) GetUserEffectiveRealmRoles(accessToken string, realm string, userID string) ([]*UserRealmRoles, error) {
 	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "users", userID, "role-mappings/realm/composite"), bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
@@ -394,6 +394,76 @@ func (g *gopherCloak) GetEffectiveRealmRoles(accessToken string, realm string, u
 	}
 
 	return userRealmRoles, nil
+}
+
+func (g *gopherCloak) GetUserAvailableRealmRoles(accessToken string, realm string, userID string) ([]*UserRealmRoles, error) {
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "users", userID, "role-mappings/realm/available"), bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return nil, err
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	userRealmRoles := make([]*UserRealmRoles, 0)
+	err = json.Unmarshal(body, &userRealmRoles)
+	if err != nil {
+		return nil, err
+	}
+
+	return userRealmRoles, nil
+}
+
+func (g *gopherCloak) AddUserEffectiveRealmRoles(accessToken string, realm string, userID string, roles []*UserRealmRoles) error {
+	rolesJson, err := json.Marshal(roles)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodPost, g.getAdminRealmURL(realm, "users", userID, "role-mappings/realm"), bytes.NewBuffer(rolesJson))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	return g.checkForErrorsInResponse(response)
+}
+
+func (g *gopherCloak) DeleteUserEffectiveRealmRoles(accessToken string, realm string, userID string, roles []*UserRealmRoles) error {
+	rolesJson, err := json.Marshal(roles)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodDelete, g.getAdminRealmURL(realm, "users", userID, "role-mappings/realm"), bytes.NewBuffer(rolesJson))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	return g.checkForErrorsInResponse(response)
 }
 
 func (g *gopherCloak) GetUsersByRoleName(accessToken string, realm string, roleName string) ([]*User, error) {
