@@ -18,7 +18,7 @@ const (
 	urlSeparator string = "/"
 )
 
-var authAdminRealms = makeURL("auth", "admin", "realms")
+var authAdminRealms = makeURL("admin", "realms")
 
 func makeURL(path ...string) string {
 	return strings.Join(path, urlSeparator)
