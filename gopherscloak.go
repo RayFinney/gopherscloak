@@ -7,7 +7,7 @@ type GophersCloak interface {
 	// Admin
 	LoginAdmin(username string, password string) (*Token, error)
 	// User Login
-	Login(username string, password string, realm string, clientId string, secret string) (*Token, error)
+	Login(username string, password string, realm string, clientId string, secret string, grantType string) (*Token, error)
 
 	// User
 	// CreateUser creates a new user
@@ -52,6 +52,8 @@ type GophersCloak interface {
 	GetUserInfo(accessToken string, realm string) (*UserInfo, error)
 	// LogoutAllUserSessions log out all current user sessions
 	LogoutAllUserSessions(accessToken string, realm string, userID string) error
+	// TriggerEmailAction triggers an email action for the user
+	TriggerEmailAction(accessToken string, realm string, userId string, actions []string) error
 
 	// Groups
 	// GetGroups gets all groups of the given realm

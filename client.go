@@ -174,10 +174,13 @@ func (g *gopherCloak) LoginAdmin(username string, password string) (*Token, erro
 	return token, err
 }
 
-func (g *gopherCloak) Login(username string, password string, realm string, clientId string, secret string) (*Token, error) {
+func (g *gopherCloak) Login(username string, password string, realm string, clientId string, secret string, grantType string) (*Token, error) {
+	if grantType == "" {
+		grantType = "password"
+	}
 	req, _ := http.NewRequest(http.MethodPost,
 		fmt.Sprintf("%s/realms/%s/protocol/openid-connect/token", g.publicBasePath, realm),
-		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=%s&grant_type=password&client_secret=%s", url.QueryEscape(username), url.QueryEscape(password), url.QueryEscape(clientId), url.QueryEscape(secret))))
+		bytes.NewBufferString(fmt.Sprintf("username=%s&password=%s&client_id=%s&grant_type=%s&client_secret=%s", url.QueryEscape(username), url.QueryEscape(password), url.QueryEscape(clientId), url.QueryEscape(grantType), url.QueryEscape(secret))))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response, err := g.httpClient.Do(req)
 	if err != nil {
@@ -475,7 +478,31 @@ func (g *gopherCloak) GetUsersByClientRoleName(accessToken string, realm string,
 }
 
 func (g *gopherCloak) SetPassword(accessToken string, userID string, realm string, password string, temporary bool) error {
-	panic("implement me")
+	credentialRepresentation := CredentialRepresentation{
+		Temporary: temporary,
+		Type:      "password",
+		Value:     password,
+	}
+	credentialRepresentationJson, err := json.Marshal(credentialRepresentation)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodPut, g.getAdminRealmURL(realm, "users", userID, "reset-password"), bytes.NewBuffer(credentialRepresentationJson))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (g *gopherCloak) UpdateUser(accessToken string, realm string, user User) error {
@@ -554,6 +581,28 @@ func (g *gopherCloak) LogoutAllUserSessions(accessToken string, realm string, us
 		return err
 	}
 	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *gopherCloak) TriggerEmailAction(accessToken string, realm string, userId string, actions []string) error {
+	actionsJson, _ := json.Marshal(actions)
+
+	req, err := http.NewRequest(http.MethodPut, g.getAdminRealmURL(realm, "users", userId, "execute-actions-email"), bytes.NewBuffer(actionsJson))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Bearer "+accessToken)
+	req.Header.Add("Content-Type", "application/json")
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
 	if err := g.checkForErrorsInResponse(response); err != nil {
 		return err
 	}
