@@ -54,6 +54,8 @@ type GophersCloak interface {
 	LogoutAllUserSessions(accessToken string, realm string, userID string) error
 	// TriggerEmailAction triggers an email action for the user
 	TriggerEmailAction(accessToken string, realm string, userId string, actions []string) error
+	// SendVerificationEmail triggers an email action for the user
+	SendVerificationEmail(accessToken string, realm string, userId string) error
 
 	// Groups
 	// GetGroups gets all groups of the given realm

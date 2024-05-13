@@ -609,6 +609,26 @@ func (g *gopherCloak) TriggerEmailAction(accessToken string, realm string, userI
 	return nil
 }
 
+func (g *gopherCloak) SendVerificationEmail(accessToken string, realm string, userId string) error {
+	req, err := http.NewRequest(http.MethodPut, g.getAdminRealmURL(realm, "users", userId, "send-verify-email"), bytes.NewBufferString(""))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Bearer "+accessToken)
+	req.Header.Add("Content-Type", "application/json")
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]*Event, error) {
 	if len(query) > 0 && string(query[0]) != "?" {
 		query = "?" + query
