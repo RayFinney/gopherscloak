@@ -2,29 +2,29 @@ package gopherscloak
 
 // User represents the Keycloak User Structure
 type User struct {
-	ID                         string                      `json:"id,omitempty"`
-	CreatedTimestamp           int64                       `json:"createdTimestamp,omitempty"`
-	Username                   string                      `json:"username,omitempty"`
-	Enabled                    bool                        `json:"enabled"`
-	Totp                       bool                        `json:"totp"`
-	EmailVerified              bool                        `json:"emailVerified"`
-	FirstName                  string                      `json:"firstName,omitempty"`
-	LastName                   string                      `json:"lastName,omitempty"`
-	Email                      string                      `json:"email,omitempty"`
-	FederationLink             string                      `json:"federationLink,omitempty"`
-	Attributes                 map[string][]string         `json:"attributes,omitempty"`
-	DisableableCredentialTypes []interface{}               `json:"disableableCredentialTypes,omitempty"`
-	RequiredActions            []string                    `json:"requiredActions,omitempty"`
-	NotBefore                  int64                       `json:"notBefore,omitempty"`
-	Access                     map[string]bool             `json:"access"`
-	ClientRoles                map[string][]string         `json:"clientRoles,omitempty"`
-	RealmRoles                 []string                    `json:"realmRoles,omitempty"`
-	ServiceAccountClientID     string                      `json:"serviceAccountClientId,omitempty"`
-	Credentials                []*CredentialRepresentation `json:"credentials,omitempty"`
+	ID                         string              `json:"id,omitempty"`
+	CreatedTimestamp           int64               `json:"createdTimestamp,omitempty"`
+	Username                   string              `json:"username,omitempty"`
+	Enabled                    bool                `json:"enabled"`
+	Totp                       bool                `json:"totp"`
+	EmailVerified              bool                `json:"emailVerified"`
+	FirstName                  string              `json:"firstName,omitempty"`
+	LastName                   string              `json:"lastName,omitempty"`
+	Email                      string              `json:"email,omitempty"`
+	FederationLink             string              `json:"federationLink,omitempty"`
+	Attributes                 map[string][]string `json:"attributes,omitempty"`
+	DisableableCredentialTypes []interface{}       `json:"disableableCredentialTypes,omitempty"`
+	RequiredActions            []string            `json:"requiredActions,omitempty"`
+	NotBefore                  int64               `json:"notBefore,omitempty"`
+	Access                     map[string]bool     `json:"access"`
+	ClientRoles                map[string][]string `json:"clientRoles,omitempty"`
+	RealmRoles                 []string            `json:"realmRoles,omitempty"`
+	ServiceAccountClientID     string              `json:"serviceAccountClientId,omitempty"`
+	Credentials                []*Credential       `json:"credentials,omitempty"`
 }
 
-// CredentialRepresentation represents credentials
-type CredentialRepresentation struct {
+// Credential represents credentials
+type Credential struct {
 	Algorithm         string              `json:"algorithm,omitempty"`
 	Config            *MultiValuedHashMap `json:"config,omitempty"`
 	Counter           int32               `json:"counter,omitempty"`
@@ -49,14 +49,14 @@ type MultiValuedHashMap struct {
 
 // GetUsersParams represents the optional parameters for getting users
 type GetUsersParams struct {
-	BriefRepresentation bool   `json:"briefRepresentation,string"`
-	Email               string `json:"email,omitempty"`
-	First               int    `json:"first,string,omitempty"`
-	FirstName           string `json:"firstName,omitempty"`
-	LastName            string `json:"lastName,omitempty"`
-	Max                 int    `json:"max,string,omitempty"`
-	Search              string `json:"search,omitempty"`
-	Username            string `json:"username,omitempty"`
+	Brief     bool   `json:"brief,string"`
+	Email     string `json:"email,omitempty"`
+	First     int    `json:"first,string,omitempty"`
+	FirstName string `json:"firstName,omitempty"`
+	LastName  string `json:"lastName,omitempty"`
+	Max       int    `json:"max,string,omitempty"`
+	Search    string `json:"search,omitempty"`
+	Username  string `json:"username,omitempty"`
 }
 
 // UserGroup is a UserGroup
@@ -78,8 +78,8 @@ type GetUsersByRoleParams struct {
 	Max   int `json:"max,string,omitempty"`
 }
 
-// UserSessionRepresentation represents a list of user's sessions
-type UserSessionRepresentation struct {
+// UserSession represents a list of user's sessions
+type UserSession struct {
 	Clients    map[string]string `json:"clients,omitempty"`
 	ID         string            `json:"id,omitempty"`
 	IPAddress  string            `json:"ipAddress,omitempty"`
@@ -149,4 +149,97 @@ type EventDetails struct {
 	Action   string `json:"action"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
+}
+
+type Organization struct {
+	ID                string               `json:"id,omitempty"`
+	Name              string               `json:"name,omitempty"`
+	Alias             string               `json:"alias,omitempty"`
+	Enabled           bool                 `json:"enabled"`
+	Description       string               `json:"description,omitempty"`
+	RedirectUrl       string               `json:"redirectUrl,omitempty"`
+	Attributes        map[string][]string  `json:"attributes,omitempty"`
+	Domains           []OrganizationDomain `json:"domains"`
+	Members           []Member             `json:"members"`
+	IdentityProviders []IdentityProvider   `json:"identityProviders"`
+}
+
+type OrganizationInvite struct {
+	Email     string `json:"email,omitempty"`
+	FirstName string `json:"firstName,omitempty"`
+	LastName  string `json:"lastName,omitempty"`
+}
+
+type OrganizationDomain struct {
+	Name     string `json:"name,omitempty"`
+	Verified bool   `json:"verified"`
+}
+
+type Member struct {
+	ID                         string                 `json:"id,omitempty"`
+	Username                   string                 `json:"username,omitempty"`
+	FirstName                  string                 `json:"firstName,omitempty"`
+	LastName                   string                 `json:"lastName,omitempty"`
+	Email                      string                 `json:"email,omitempty"`
+	EmailVerified              bool                   `json:"emailVerified"`
+	Attributes                 map[string][]string    `json:"attributes,omitempty"`
+	Self                       string                 `json:"self,omitempty"`
+	Origin                     string                 `json:"origin,omitempty"`
+	CreatedTimestamp           int64                  `json:"createdTimestamp,omitempty"`
+	Enabled                    bool                   `json:"enabled"`
+	Totp                       bool                   `json:"totp"`
+	FederationLink             string                 `json:"federationLink,omitempty"`
+	ServiceAccountClientID     string                 `json:"serviceAccountClientId,omitempty"`
+	Credentials                []Credential           `json:"credentials,omitempty"`
+	DisableableCredentialTypes []string               `json:"disableableCredentialTypes,omitempty"`
+	RequiredActions            []string               `json:"requiredActions,omitempty"`
+	FederatedIdentities        []FederatedIdentity    `json:"federatedIdentities,omitempty"`
+	RealmRoles                 []string               `json:"realmRoles,omitempty"`
+	ClientRoles                map[string][]string    `json:"clientRoles,omitempty"`
+	ClientConsents             map[string]UserConsent `json:"clientConsents,omitempty"`
+	NotBefore                  int64                  `json:"notBefore,omitempty"`
+	ApplicationRoles           map[string][]string    `json:"applicationRoles,omitempty"`
+	SocialLinks                []SocialLink           `json:"socialLinks,omitempty"`
+	Groups                     []string               `json:"groups,omitempty"`
+	Access                     map[string]bool        `json:"access,omitempty"`
+}
+
+type IdentityProvider struct {
+	Alias                       string            `json:"alias,omitempty"`
+	DisplayName                 string            `json:"displayName,omitempty"`
+	InternalId                  string            `json:"internalId,omitempty"`
+	ProviderId                  string            `json:"providerId,omitempty"`
+	Enabled                     bool              `json:"enabled"`
+	UpdateProfileFirstLoginMode string            `json:"updateProfileFirstLoginMode,omitempty"`
+	TrustEmail                  bool              `json:"trustEmail"`
+	StoreToken                  bool              `json:"storeToken"`
+	AddReadTokenRoleOnCreate    bool              `json:"addReadTokenRoleOnCreate"`
+	AuthenticateByDefault       bool              `json:"authenticateByDefault"`
+	LinkOnly                    bool              `json:"linkOnly"`
+	HideOnLoginPage             bool              `json:"hideOnLoginPage"`
+	FirstBrokerLoginFlowAlias   string            `json:"firstBrokerLoginFlowAlias,omitempty"`
+	PostBrokerLoginFlowAlias    string            `json:"postBrokerLoginFlowAlias,omitempty"`
+	OrganisationId              string            `json:"organisationId,omitempty"`
+	Config                      map[string]string `json:"config,omitempty"`
+	UpdateProfileFirstLogin     bool              `json:"updateProfileFirstLogin"`
+}
+
+type FederatedIdentity struct {
+	IdentityProvider string `json:"identityProvider,omitempty"`
+	UserId           string `json:"userId,omitempty"`
+	UserName         string `json:"userName,omitempty"`
+}
+
+type UserConsent struct {
+	ClientId            string   `json:"clientId,omitempty"`
+	GrantedClientScopes []string `json:"grantedClientScopes,omitempty"`
+	CreatedDate         int64    `json:"createdDate,omitempty"`
+	LastUpdatedDate     int64    `json:"lastUpdatedDate,omitempty"`
+	GrantedRealmRoles   []string `json:"grantedRealmRoles,omitempty"`
+}
+
+type SocialLink struct {
+	SocialProvider string `json:"socialProvider,omitempty"`
+	SocialUserId   string `json:"socialUserId,omitempty"`
+	SocialUsername string `json:"socialUsername,omitempty"`
 }
