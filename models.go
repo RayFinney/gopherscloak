@@ -20,7 +20,7 @@ type User struct {
 	ClientRoles                map[string][]string `json:"clientRoles,omitempty"`
 	RealmRoles                 []string            `json:"realmRoles,omitempty"`
 	ServiceAccountClientID     string              `json:"serviceAccountClientId,omitempty"`
-	Credentials                []*Credential       `json:"credentials,omitempty"`
+	Credentials                []Credential        `json:"credentials,omitempty"`
 }
 
 // Credential represents credentials
@@ -101,7 +101,7 @@ type CertResponseKey struct {
 
 // CertResponse is returned by the certs endpoint
 type CertResponse struct {
-	Keys []*CertResponseKey `json:"keys,omitempty"`
+	Keys []CertResponseKey `json:"keys,omitempty"`
 }
 
 // Token
@@ -127,7 +127,7 @@ type Group struct {
 	ID          string              `json:"id,omitempty"`
 	Name        string              `json:"name,omitempty"`
 	Path        string              `json:"path,omitempty"`
-	SubGroups   []*Group            `json:"subGroups,omitempty"`
+	SubGroups   []Group             `json:"subGroups,omitempty"`
 	Attributes  map[string][]string `json:"attributes,omitempty"`
 	Access      map[string]bool     `json:"access,omitempty"`
 	ClientRoles map[string][]string `json:"clientRoles,omitempty"`
