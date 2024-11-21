@@ -1386,7 +1386,7 @@ func setupHttpClient() *http.Client {
 
 func IsDisallowedIP(hostIP string) bool {
 	ip := net.ParseIP(hostIP)
-	return ip.IsMulticast() || ip.IsUnspecified() || ip.IsLoopback() || ip.IsPrivate()
+	return ip.IsMulticast() || ip.IsUnspecified() || ip.IsLoopback()
 }
 
 func SafeTransport(timeout time.Duration) *http.Transport {
