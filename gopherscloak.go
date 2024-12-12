@@ -101,4 +101,8 @@ type GophersCloak interface {
 	GetGroupMembers(accessToken string, realm, groupID string) ([]User, error)
 	// GetEvents Returns all events, or filters them based on URL query parameters listed here
 	GetEvents(accessToken string, realm, query string) ([]Event, error)
+
+	// External IDP
+	// GetIdpToken gets the token for the given idp
+	GetIdpToken(accessToken string, realm string, idpAlias string) (Token, error)
 }

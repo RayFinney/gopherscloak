@@ -1352,6 +1352,34 @@ func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]Even
 	return events, g.checkForErrorsInResponse(response)
 }
 
+func (g *gopherCloak) GetIdpToken(accessToken string, realm string, idpAlias string) (Token, error) {
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/realms/%s/broker/%s/token", g.basePath, realm, idpAlias), bytes.NewBufferString(""))
+	if err != nil {
+		return Token{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return Token{}, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(response.Body)
+	body, _ := io.ReadAll(response.Body)
+	token := Token{}
+	err = json.Unmarshal(body, &token)
+	if err != nil {
+		return Token{}, err
+	}
+
+	return token, g.checkForErrorsInResponse(response)
+}
+
 // ===============
 // Keycloak client
 // ===============
