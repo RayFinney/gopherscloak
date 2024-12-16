@@ -1353,7 +1353,7 @@ func (g *gopherCloak) GetEvents(accessToken string, realm, query string) ([]Even
 }
 
 func (g *gopherCloak) GetIdpToken(accessToken string, realm string, idpAlias string) (Token, error) {
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/realms/%s/broker/%s/token", g.basePath, realm, idpAlias), bytes.NewBufferString(""))
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/realms/%s/broker/%s/token", g.basePath, realm, idpAlias), bytes.NewBufferString(""))
 	if err != nil {
 		return Token{}, err
 	}
