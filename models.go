@@ -243,3 +243,20 @@ type SocialLink struct {
 	SocialUserId   string `json:"socialUserId,omitempty"`
 	SocialUsername string `json:"socialUsername,omitempty"`
 }
+
+type Role struct {
+	ID                 string            `json:"id,omitempty"`
+	Name               string            `json:"name,omitempty"`
+	Description        string            `json:"description,omitempty"`
+	ScopeParamRequired bool              `json:"scopeParamRequired"`
+	Composite          bool              `json:"composite"`
+	ClientRole         bool              `json:"clientRole"`
+	ContainerID        string            `json:"containerId,omitempty"`
+	Attributes         map[string]string `json:"attributes,omitempty"`
+}
+
+type Roles struct {
+	RealmRoles       []Role            `json:"realm,omitempty"`
+	ClientRoles      map[string][]Role `json:"client,omitempty"`
+	ApplicationRoles map[string][]Role `json:"application,omitempty"`
+}

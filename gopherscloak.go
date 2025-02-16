@@ -90,9 +90,8 @@ type GophersCloak interface {
 	// TriggerEmailAction triggers an email action for the user
 	TriggerEmailAction(accessToken string, realm string, userId string, actions []string) error
 	// SendVerificationEmail triggers an email action for the user
-	SendVerificationEmail(accessToken string, realm string, userId string) error
+	SendVerificationEmail(accessToken string, realm string, userId string, query string) error
 
-	// Groups
 	// GetGroups gets all groups of the given realm
 	GetGroups(accessToken string, realm string) ([]Group, error)
 	// GetGroup gets the given group
@@ -102,7 +101,25 @@ type GophersCloak interface {
 	// GetEvents Returns all events, or filters them based on URL query parameters listed here
 	GetEvents(accessToken string, realm, query string) ([]Event, error)
 
-	// External IDP
+	// GetRealmRoles gets all realm roles of the given realm
+	GetRealmRoles(accessToken string, realm string, query string) ([]Role, error)
+	// GetClientRoles gets all client roles of the given realm
+	GetClientRoles(accessToken string, realm string, clientID string, query string) ([]Role, error)
+	// CreateRealmRole creates a new realm role
+	CreateRealmRole(accessToken string, realm string, role Role) (string, error)
+	// CreateClientRole creates a new client role
+	CreateClientRole(accessToken string, realm string, clientID string, role Role) (string, error)
+	// GetClientRolesCompositesRoles gets all client roles of the given realm
+	GetClientRolesCompositesRoles(accessToken string, realm string, clientID string, roleName string, query string) ([]Role, error)
+	// DeleteRoleFromRealmComposite deletes the given role from the realm composites
+	DeleteRoleFromRealmComposite(accessToken string, realm string, roleName string, roles []Role) error
+	// DeleteRoleFromClientComposite deletes the given role from the client composites
+	DeleteRoleFromClientComposite(accessToken string, realm string, clientID string, roleName string, roles []Role) error
+	// GetRolesComposites gets all realm roles of the given realm
+	GetRolesComposites(accessToken string, realm string, roleName string) ([]Role, error)
+	// AddCompositesToRole adds roles to the given role
+	AddCompositesToRole(accessToken string, realm string, roleName string, role Role) error
+
 	// GetIdpToken gets the token for the given idp
 	GetIdpToken(accessToken string, realm string, idpAlias string) (Token, error)
 }

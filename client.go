@@ -38,6 +38,79 @@ type gopherCloak struct {
 	certsLock  sync.Mutex
 }
 
+// ===============
+// Keycloak client
+// ===============
+
+// NewClient creates a new Client
+func NewClient(basePath string, publicBasePath string, httpClient *http.Client) GophersCloak {
+	c := gopherCloak{
+		basePath:       strings.TrimRight(basePath, urlSeparator),
+		publicBasePath: strings.TrimRight(publicBasePath, urlSeparator),
+		certsCache:     make(map[string]*CertResponse),
+	}
+	c.httpClient = httpClient
+	if httpClient == nil {
+		c.httpClient = setupHttpClient()
+	}
+	c.Config.CertsInvalidateTime = 60 * time.Minute
+
+	return &c
+}
+
+func setupHttpClient() *http.Client {
+	t := SafeTransport(10 * time.Second)
+	t.MaxIdleConns = 100
+	t.MaxConnsPerHost = 100
+	t.MaxIdleConnsPerHost = 100
+
+	return &http.Client{
+		Timeout:   60 * time.Second,
+		Transport: t,
+	}
+}
+
+func IsDisallowedIP(hostIP string) bool {
+	ip := net.ParseIP(hostIP)
+	return ip.IsMulticast() || ip.IsUnspecified() || ip.IsLoopback()
+}
+
+func SafeTransport(timeout time.Duration) *http.Transport {
+	return &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			c, err := net.DialTimeout(network, addr, timeout)
+			if err != nil {
+				return nil, err
+			}
+			ip, _, _ := net.SplitHostPort(c.RemoteAddr().String())
+			if IsDisallowedIP(ip) {
+				return nil, errors.New("ip address is not allowed")
+			}
+			return c, err
+		},
+		DialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			dialer := &net.Dialer{Timeout: timeout}
+			c, err := tls.DialWithDialer(dialer, network, addr, &tls.Config{})
+			if err != nil {
+				return nil, err
+			}
+
+			ip, _, _ := net.SplitHostPort(c.RemoteAddr().String())
+			if IsDisallowedIP(ip) {
+				return nil, errors.New("ip address is not allowed")
+			}
+
+			err = c.Handshake()
+			if err != nil {
+				return c, err
+			}
+
+			return c, c.Handshake()
+		},
+		TLSHandshakeTimeout: timeout,
+	}
+}
+
 func (g *gopherCloak) HealthCheck(realm string) error {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/realms/%s", g.basePath, realm), bytes.NewBufferString(""))
 	if err != nil {
@@ -213,8 +286,6 @@ func (g *gopherCloak) CreateOrganization(accessToken string, realm string, organ
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 
 	response, err := g.httpClient.Do(req)
 	if err != nil {
@@ -1296,8 +1367,11 @@ func (g *gopherCloak) TriggerEmailAction(accessToken string, realm string, userI
 	return nil
 }
 
-func (g *gopherCloak) SendVerificationEmail(accessToken string, realm string, userId string) error {
-	req, err := http.NewRequest(http.MethodPut, g.getAdminRealmURL(realm, "users", userId, "send-verify-email"), bytes.NewBufferString(""))
+func (g *gopherCloak) SendVerificationEmail(accessToken string, realm string, userId string, query string) error {
+	if len(query) > 0 && string(query[0]) != "?" {
+		query = "?" + query
+	}
+	req, err := http.NewRequest(http.MethodPut, g.getAdminRealmURL(realm, "users", userId, "send-verify-email")+query, bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}
@@ -1380,75 +1454,241 @@ func (g *gopherCloak) GetIdpToken(accessToken string, realm string, idpAlias str
 	return token, g.checkForErrorsInResponse(response)
 }
 
-// ===============
-// Keycloak client
-// ===============
-
-// NewClient creates a new Client
-func NewClient(basePath string, publicBasePath string, httpClient *http.Client) GophersCloak {
-	c := gopherCloak{
-		basePath:       strings.TrimRight(basePath, urlSeparator),
-		publicBasePath: strings.TrimRight(publicBasePath, urlSeparator),
-		certsCache:     make(map[string]*CertResponse),
+func (g *gopherCloak) GetRealmRoles(accessToken string, realm string, query string) ([]Role, error) {
+	if len(query) > 0 && string(query[0]) != "?" {
+		query = "?" + query
 	}
-	c.httpClient = httpClient
-	if httpClient == nil {
-		c.httpClient = setupHttpClient()
+	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "roles")+query, bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
 	}
-	c.Config.CertsInvalidateTime = 60 * time.Minute
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 
-	return &c
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	roles := make([]Role, 0)
+	err = json.Unmarshal(body, &roles)
+	if err != nil {
+		return nil, err
+	}
+
+	return roles, g.checkForErrorsInResponse(response)
 }
 
-func setupHttpClient() *http.Client {
-	t := SafeTransport(10 * time.Second)
-	t.MaxIdleConns = 100
-	t.MaxConnsPerHost = 100
-	t.MaxIdleConnsPerHost = 100
-
-	return &http.Client{
-		Timeout:   60 * time.Second,
-		Transport: t,
+func (g *gopherCloak) GetClientRoles(accessToken string, realm string, clientID string, query string) ([]Role, error) {
+	if len(query) > 0 && string(query[0]) != "?" {
+		query = "?" + query
 	}
+	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "clients", clientID, "roles")+query, bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	roles := make([]Role, 0)
+	err = json.Unmarshal(body, &roles)
+	if err != nil {
+		return nil, err
+	}
+
+	return roles, g.checkForErrorsInResponse(response)
 }
 
-func IsDisallowedIP(hostIP string) bool {
-	ip := net.ParseIP(hostIP)
-	return ip.IsMulticast() || ip.IsUnspecified() || ip.IsLoopback()
+func (g *gopherCloak) CreateRealmRole(accessToken string, realm string, role Role) (string, error) {
+	roleJson, err := json.Marshal(role)
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequest(http.MethodPost, g.getAdminRealmURL(realm, "roles"), bytes.NewBuffer(roleJson))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(response.Body)
+
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return "", err
+	}
+	return getID(response), nil
 }
 
-func SafeTransport(timeout time.Duration) *http.Transport {
-	return &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			c, err := net.DialTimeout(network, addr, timeout)
-			if err != nil {
-				return nil, err
-			}
-			ip, _, _ := net.SplitHostPort(c.RemoteAddr().String())
-			if IsDisallowedIP(ip) {
-				return nil, errors.New("ip address is not allowed")
-			}
-			return c, err
-		},
-		DialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			dialer := &net.Dialer{Timeout: timeout}
-			c, err := tls.DialWithDialer(dialer, network, addr, &tls.Config{})
-			if err != nil {
-				return nil, err
-			}
-
-			ip, _, _ := net.SplitHostPort(c.RemoteAddr().String())
-			if IsDisallowedIP(ip) {
-				return nil, errors.New("ip address is not allowed")
-			}
-
-			err = c.Handshake()
-			if err != nil {
-				return c, err
-			}
-
-			return c, c.Handshake()
-		},
-		TLSHandshakeTimeout: timeout,
+func (g *gopherCloak) CreateClientRole(accessToken string, realm string, clientID string, role Role) (string, error) {
+	roleJson, err := json.Marshal(role)
+	if err != nil {
+		return "", err
 	}
+	req, err := http.NewRequest(http.MethodPost, g.getAdminRealmURL(realm, "clients", clientID, "roles"), bytes.NewBuffer(roleJson))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(response.Body)
+
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return "", err
+	}
+	return getID(response), nil
+}
+
+func (g *gopherCloak) GetClientRolesCompositesRoles(accessToken string, realm string, clientID string, roleName string, query string) ([]Role, error) {
+	if len(query) > 0 && string(query[0]) != "?" {
+		query = "?" + query
+	}
+	req, err := http.NewRequest("GET", g.getAdminRealmURL(realm, "clients", clientID, "roles", roleName, "composites", "clients", clientID)+query, bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	roles := make([]Role, 0)
+	err = json.Unmarshal(body, &roles)
+	if err != nil {
+		return nil, err
+	}
+
+	return roles, g.checkForErrorsInResponse(response)
+}
+
+func (g *gopherCloak) DeleteRoleFromRealmComposite(accessToken string, realm string, roleName string, roles []Role) error {
+	rolesJson, err := json.Marshal(roles)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodDelete, g.getAdminRealmURL(realm, "roles", roleName, "composites"), bytes.NewBuffer(rolesJson))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(response.Body)
+
+	return g.checkForErrorsInResponse(response)
+}
+
+func (g *gopherCloak) DeleteRoleFromClientComposite(accessToken string, realm string, clientID string, roleName string, roles []Role) error {
+	rolesJson, err := json.Marshal(roles)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodDelete, g.getAdminRealmURL(realm, "clients", clientID, "roles", roleName, "composites"), bytes.NewBuffer(rolesJson))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(response.Body)
+
+	return g.checkForErrorsInResponse(response)
+}
+
+func (g *gopherCloak) GetRolesComposites(accessToken string, realm string, roleName string) ([]Role, error) {
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "roles", roleName, "composites"), bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	roles := make([]Role, 0)
+	err = json.Unmarshal(body, &roles)
+	if err != nil {
+		return nil, err
+	}
+
+	return roles, g.checkForErrorsInResponse(response)
+}
+
+func (g *gopherCloak) AddCompositesToRole(accessToken string, realm string, roleName string, role Role) error {
+	roleJson, err := json.Marshal(role)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodPost, g.getAdminRealmURL(realm, "roles", roleName, "composites"), bytes.NewBuffer(roleJson))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(response.Body)
+
+	return g.checkForErrorsInResponse(response)
 }
