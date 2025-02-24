@@ -130,11 +130,14 @@ func (g *gopherCloak) HealthCheck(realm string) error {
 }
 
 // DeleteAttackDetection Clear any user login failures for all users This can release temporary disabled users
-func (g *gopherCloak) DeleteAttackDetection(realm string) error {
+func (g *gopherCloak) DeleteAttackDetection(accessToken string, realm string) error {
 	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/realms/%s/attack-detection/brute-force/users", g.basePath, realm), bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
 	response, err := g.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -149,11 +152,14 @@ func (g *gopherCloak) DeleteAttackDetection(realm string) error {
 }
 
 // DeleteUserLoginFailures Clear any user login failures for all users This can release temporary disabled users
-func (g *gopherCloak) DeleteUserLoginFailures(realm string, userId string) error {
+func (g *gopherCloak) DeleteUserLoginFailures(accessToken string, realm string, userId string) error {
 	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/realms/%s/attack-detection/brute-force/users/%s", g.basePath, realm, userId), bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
 	response, err := g.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -168,11 +174,14 @@ func (g *gopherCloak) DeleteUserLoginFailures(realm string, userId string) error
 }
 
 // GetAttackDetectionStatus Get status of the attack detection for a specific user
-func (g *gopherCloak) GetAttackDetectionStatus(realm string, userId string) (map[interface{}]interface{}, error) {
+func (g *gopherCloak) GetAttackDetectionStatus(accessToken string, realm string, userId string) (map[interface{}]interface{}, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/realms/%s/attack-detection/brute-force/users/%s", g.basePath, realm, userId), bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
 	response, err := g.httpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -286,6 +295,8 @@ func (g *gopherCloak) CreateOrganization(accessToken string, realm string, organ
 	if err != nil {
 		return "", err
 	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 
 	response, err := g.httpClient.Do(req)
 	if err != nil {

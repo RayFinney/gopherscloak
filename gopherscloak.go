@@ -5,11 +5,11 @@ type GophersCloak interface {
 	HealthCheck(realm string) error
 
 	// DeleteAttackDetection Clear any user login failures for all users This can release temporary disabled users
-	DeleteAttackDetection(realm string) error
+	DeleteAttackDetection(accessToken string, realm string) error
 	// DeleteUserLoginFailures Clear any user login failures for all users This can release temporary disabled users
-	DeleteUserLoginFailures(realm string, userId string) error
+	DeleteUserLoginFailures(accessToken string, realm string, userId string) error
 	// GetAttackDetectionStatus Get status of the attack detection for a specific user
-	GetAttackDetectionStatus(realm string, userId string) (map[interface{}]interface{}, error)
+	GetAttackDetectionStatus(accessToken string, realm string, userId string) (map[interface{}]interface{}, error)
 
 	// GetOrganizations gets all organizations
 	GetOrganizations(accessToken string, realm string, query string) ([]Organization, error)
