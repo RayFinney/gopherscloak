@@ -92,12 +92,14 @@ type GophersCloak interface {
 	// SendVerificationEmail triggers an email action for the user
 	SendVerificationEmail(accessToken string, realm string, userId string, query string) error
 
-	// GetGroups gets all groups of the given realm
-	GetGroups(accessToken string, realm string) ([]Group, error)
+	// GetGroups gets all groups of the given realm if withSubGroups is true, it will return all groups and subgroups
+	GetGroups(accessToken string, realm string, withSubGroups bool) ([]*Group, error)
 	// GetGroup gets the given group
 	GetGroup(accessToken string, realm, groupID string) (Group, error)
 	// GetGroupMembers get a list of users of group with id in realm
 	GetGroupMembers(accessToken string, realm, groupID string) ([]User, error)
+	// GetChildrenGroups gets all child groups of the given group
+	GetChildrenGroups(accessToken string, realm, groupID string) ([]*Group, error)
 	// GetEvents Returns all events, or filters them based on URL query parameters listed here
 	GetEvents(accessToken string, realm, query string) ([]Event, error)
 

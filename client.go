@@ -657,8 +657,12 @@ func (g *gopherCloak) OrganizationAddMember(accessToken string, realm string, or
 	return g.checkForErrorsInResponse(response)
 }
 
-func (g *gopherCloak) GetGroups(accessToken string, realm string) ([]Group, error) {
-	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "groups"), bytes.NewBufferString(""))
+func (g *gopherCloak) GetGroups(accessToken string, realm string, withSubGroups bool) ([]Group, error) {
+	reqPath := g.getAdminRealmURL(realm, "groups")
+	if withSubGroups {
+		reqPath += "?briefRepresentation=true"
+	}
+	req, err := http.NewRequest(http.MethodGet, reqPath, bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
@@ -669,12 +673,7 @@ func (g *gopherCloak) GetGroups(accessToken string, realm string) ([]Group, erro
 	if err != nil {
 		return nil, err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Println(err)
-		}
-	}(response.Body)
+	defer response.Body.Close()
 	if err := g.checkForErrorsInResponse(response); err != nil {
 		return nil, err
 	}
@@ -685,6 +684,109 @@ func (g *gopherCloak) GetGroups(accessToken string, realm string) ([]Group, erro
 	}
 	userGroups := make([]Group, 0)
 	err = json.Unmarshal(body, &userGroups)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
+	}
+
+	if !withSubGroups {
+		return userGroups, nil
+	}
+
+	// Fetch subgroups recursively with concurrency
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(userGroups))
+
+	// Process each top-level group concurrently
+	for _, group := range userGroups {
+		if group.SubGroupCount > 0 {
+			wg.Add(1)
+			go func(group *Group) {
+				defer wg.Done()
+				// Recursively fetch subgroups for this group
+				if err := g.fetchSubGroups(accessToken, realm, group); err != nil {
+					errChan <- fmt.Errorf("failed to fetch subgroups for group %s: %v", group.Name, err)
+				}
+			}(&group)
+		}
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return userGroups, nil
+}
+
+func (g *gopherCloak) fetchSubGroups(accessToken, realm string, group *Group) error {
+	subGroups, err := g.GetChildrenGroups(accessToken, realm, group.ID)
+	if err != nil {
+		return err
+	}
+
+	group.SubGroups = subGroups
+	if len(subGroups) == 0 {
+		return nil
+	}
+
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(subGroups))
+
+	for _, subGroup := range subGroups {
+		if subGroup.SubGroupCount > 0 {
+			wg.Add(1)
+			go func(subGroup *Group) {
+				defer wg.Done()
+				if err := g.fetchSubGroups(accessToken, realm, subGroup); err != nil {
+					errChan <- fmt.Errorf("failed to fetch subgroups for subgroup %s: %v", subGroup.Name, err)
+				}
+			}(&subGroup)
+		}
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (g *gopherCloak) GetChildrenGroups(accessToken string, realm, groupID string) ([]Group, error) {
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "groups", groupID, "children"), bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return nil, err
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	userGroups := make([]Group, 0)
+	err = json.Unmarshal(body, &userGroups)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
+	}
+
 	return userGroups, err
 }
 
