@@ -697,7 +697,7 @@ func (g *gopherCloak) GetGroups(accessToken string, realm string, withSubGroups 
 	errChan := make(chan error, len(userGroups))
 
 	// Process each top-level group concurrently
-	for _, group := range userGroups {
+	for i, group := range userGroups {
 		if group.SubGroupCount > 0 {
 			wg.Add(1)
 			go func(group *Group) {
@@ -706,7 +706,7 @@ func (g *gopherCloak) GetGroups(accessToken string, realm string, withSubGroups 
 				if err := g.fetchSubGroups(accessToken, realm, group); err != nil {
 					errChan <- fmt.Errorf("failed to fetch subgroups for group %s: %v", group.Name, err)
 				}
-			}(&group)
+			}(&userGroups[i])
 		}
 	}
 
@@ -736,7 +736,7 @@ func (g *gopherCloak) fetchSubGroups(accessToken, realm string, group *Group) er
 	var wg sync.WaitGroup
 	errChan := make(chan error, len(subGroups))
 
-	for _, subGroup := range subGroups {
+	for i, subGroup := range subGroups {
 		if subGroup.SubGroupCount > 0 {
 			wg.Add(1)
 			go func(subGroup *Group) {
@@ -744,7 +744,7 @@ func (g *gopherCloak) fetchSubGroups(accessToken, realm string, group *Group) er
 				if err := g.fetchSubGroups(accessToken, realm, subGroup); err != nil {
 					errChan <- fmt.Errorf("failed to fetch subgroups for subgroup %s: %v", subGroup.Name, err)
 				}
-			}(&subGroup)
+			}(&subGroups[i])
 		}
 	}
 
