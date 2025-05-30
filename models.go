@@ -25,6 +25,7 @@ type User struct {
 
 // Credential represents credentials
 type Credential struct {
+	ID                string              `json:"id,omitempty"`
 	Algorithm         string              `json:"algorithm,omitempty"`
 	Config            *MultiValuedHashMap `json:"config,omitempty"`
 	Counter           int32               `json:"counter,omitempty"`
