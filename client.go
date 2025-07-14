@@ -657,6 +657,39 @@ func (g *gopherCloak) OrganizationAddMember(accessToken string, realm string, or
 	return g.checkForErrorsInResponse(response)
 }
 
+func (g *gopherCloak) GetMemberOrganizations(accessToken string, realm string, memberID string) ([]Organization, error) {
+	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "organizations", "members", memberID, "organizations"), bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	response, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(response.Body)
+	if err := g.checkForErrorsInResponse(response); err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	organizations := make([]Organization, 0)
+	err = json.Unmarshal(body, &organizations)
+	if err != nil {
+		return nil, err
+	}
+	return organizations, nil
+}
+
 func (g *gopherCloak) GetGroups(accessToken string, realm string, withSubGroups bool) ([]Group, error) {
 	reqPath := g.getAdminRealmURL(realm, "groups")
 	if withSubGroups {
@@ -1293,64 +1326,6 @@ func (g *gopherCloak) SetPassword(accessToken string, userID string, realm strin
 		return err
 	}
 	req, err := http.NewRequest(http.MethodPut, g.getAdminRealmURL(realm, "users", userID, "reset-password"), bytes.NewBuffer(credentialJson))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-
-	response, err := g.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Println(err)
-		}
-	}(response.Body)
-	if err := g.checkForErrorsInResponse(response); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *gopherCloak) GetCredentials(accessToken string, realm string, userID string) ([]Credential, error) {
-	req, err := http.NewRequest(http.MethodGet, g.getAdminRealmURL(realm, "users", userID, "credentials"), bytes.NewBufferString(""))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-
-	response, err := g.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Println(err)
-		}
-	}(response.Body)
-	if err := g.checkForErrorsInResponse(response); err != nil {
-		return nil, err
-	}
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-	credentials := make([]Credential, 0)
-	err = json.Unmarshal(body, &credentials)
-	if err != nil {
-		return nil, err
-	}
-	return credentials, nil
-}
-
-func (g *gopherCloak) DeleteCredential(accessToken string, realm string, userID string, credentialID string) error {
-	req, err := http.NewRequest(http.MethodDelete, g.getAdminRealmURL(realm, "users", userID, "credentials", credentialID), bytes.NewBufferString(""))
 	if err != nil {
 		return err
 	}

@@ -43,6 +43,8 @@ type GophersCloak interface {
 	OrganizationInviteMember(accessToken string, realm string, organizationID string, member OrganizationInvite) error
 	// OrganizationAddMember adds a new member to the given organization
 	OrganizationAddMember(accessToken string, realm string, organizationID string, memberId string) error
+	// GetMemberOrganizations gets all organizations of the given member
+	GetMemberOrganizations(accessToken string, realm string, memberID string) ([]Organization, error)
 
 	// LoginAdmin logs in the admin user against basePath not publicBasePath
 	LoginAdmin(username string, password string) (Token, error)
@@ -71,10 +73,6 @@ type GophersCloak interface {
 	DeleteUserEffectiveRealmRoles(accessToken string, realm string, userID string, roles []UserRealmRoles) error
 	// SetPassword sets a new password for the user with the given id. Needs elevated privileges
 	SetPassword(accessToken string, userID string, realm string, password string, temporary bool) error
-	// GetCredentials gets the credentials of the user with the given id
-	GetCredentials(accessToken string, realm string, userID string) ([]Credential, error)
-	// DeleteCredential deletes credential with given ID
-	DeleteCredential(accessToken string, realm string, userID string, credentialID string) error
 	// UpdateUser updates the given user
 	UpdateUser(accessToken string, realm string, user User) error
 	// AddUserToGroup puts given user to given group
