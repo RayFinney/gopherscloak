@@ -612,15 +612,22 @@ func (g *gopherCloak) GetOrganizationMemberOrganizations(accessToken string, rea
 }
 
 func (g *gopherCloak) OrganizationInviteMember(accessToken string, realm string, organizationID string, member OrganizationInvite) error {
-	memberJson, err := json.Marshal(member)
+	formData := url.Values{}
+	if member.Email != "" {
+		formData.Set("email", member.Email)
+	}
+	if member.FirstName != "" {
+		formData.Set("firstName", member.FirstName)
+	}
+	if member.LastName != "" {
+		formData.Set("lastName", member.LastName)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, g.getAdminRealmURL(realm, "organizations", organizationID, "members", "invite-user"), strings.NewReader(formData.Encode()))
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, g.getAdminRealmURL(realm, "organizations", organizationID, "members"), bytes.NewBuffer(memberJson))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 
 	response, err := g.httpClient.Do(req)
